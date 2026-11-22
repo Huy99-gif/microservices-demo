@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  user-service:
+    build: ./user-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/users_db
+      DB_USERNAME: user_svc
+      DB_PASSWORD: user_pass
+    ports:
+      - "5001:5001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  product-service:
+    build: ./product-service
+    environment:
+      DATABASE_URL: postgresql+psycopg2://product_svc:product_pass@postgres:5432/products_db
+      USER_SERVICE_URL: http://user-service:5001
+    ports:
+      - "5002:5002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    environment:
+      USER_SERVICE_URL: http://user-service:5001
+      PRODUCT_SERVICE_URL: http://product-service:5002
+    ports:
+      - "8000:8000"
+    depends_on:
+      - user-service
+      - product-service
+
+volumes:
+  pgdata:

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Microservices Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    table { border-collapse: collapse; margin-bottom: 2rem; }
+    th, td { border: 1px solid #ccc; padding: 6px 12px; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>Microservices Demo</h1>
+
+  <h2>Users (user-service - Spring Boot)</h2>
+  <table id="users"><thead><tr><th>ID</th><th>Name</th><th>Email</th></tr></thead><tbody></tbody></table>
+
+  <h2>Products (product-service - Flask)</h2>
+  <table id="products"><thead><tr><th>ID</th><th>Name</th><th>Price</th><th>Owner</th></tr></thead><tbody></tbody></table>
+
+  <script>
+    function fill(id, rows, cols) {
+      const tbody = document.querySelector('#' + id + ' tbody');
+      tbody.innerHTML = rows.map(r =>
+        '<tr>' + cols.map(c => '<td>' + (r[c] ?? '') + '</td>').join('') + '</tr>').join('');
+    }
+    fetch('/api/users').then(r => r.json()).then(d => fill('users', d, ['id', 'name', 'email']));
+    fetch('/api/products').then(r => r.json()).then(d => fill('products', d, ['id', 'name', 'price', 'owner_name']));
+  </script>
+</body>
+</html>
