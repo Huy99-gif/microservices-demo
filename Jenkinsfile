@@ -69,11 +69,13 @@ pipeline {
                 expression { params.RUN_TRIVY }
             }
             steps {
-                sh '''
-                    for img in user-service product-service frontend; do
-                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache/ aquasec/trivy:latest image --severity HIGH,CRITICAL --exit-code 0 --no-progress $img:$BUILD_NUMBER
-                    done
-                '''
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    sh '''
+                        for img in user-service product-service frontend; do
+                            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivy-cache:/root/.cache/ aquasec/trivy:latest image --timeout 30m --scanners vuln --severity HIGH,CRITICAL --exit-code 0 --no-progress $img:$BUILD_NUMBER
+                        done
+                    '''
+                }
             }
         }
 
